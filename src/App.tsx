@@ -266,6 +266,46 @@ const MenuButton = ({ icon, label, onClick, className }: any) => (
   </button>
 );
 
+const LandingPage = ({ onLaunch }: { onLaunch: () => void }) => {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-slate-100 font-sans">
+      <div className="max-w-4xl w-full bg-slate-800/70 backdrop-blur-md rounded-3xl p-12 md:p-16 shadow-2xl border border-white/10 space-y-10">
+        <div className="space-y-4">
+          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight">Meet <span className="text-brand-primary">Bindel</span></h1>
+          <p className="text-xl md:text-2xl text-slate-400 max-w-2xl mx-auto">The Unified Smart Canvas for modern researchers and writers.</p>
+        </div>
+        
+        <div className="grid md:grid-cols-2 gap-10 text-left my-10">
+          <div className="space-y-3">
+            <h3 className="text-2xl font-bold flex items-center gap-2">🎯 The Goal</h3>
+            <p className="text-slate-400 leading-relaxed text-lg">To provide a distraction-free, privacy-conscious workspace that seamlessly bridges the gap between raw web scraping and academic writing. No more messy copy-pasting from websites. Just clean, readable text.</p>
+          </div>
+          <div className="space-y-3">
+            <h3 className="text-2xl font-bold flex items-center gap-2">✨ Why It's Different</h3>
+            <p className="text-slate-400 leading-relaxed text-lg">Bindel features an automated ingestion pipeline that strips ads and formatting from URLs, instantly converting them to structured Markdown. Combined with Gemini AI, it automatically polishes text to high-modern academic standards.</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-8 border-t border-slate-700/50">
+          <button onClick={onLaunch} className="bg-brand-primary hover:bg-blue-700 text-white flex items-center justify-center gap-2 text-lg font-bold py-4 px-8 rounded-xl transition-all shadow-lg hover:-translate-y-1">
+            <Globe size={24} /> Use Online Free
+          </button>
+          <a href="https://github.com/babakane/Bindel" target="_blank" className="text-slate-300 hover:text-white flex items-center gap-2 font-medium text-lg bg-slate-800/50 px-6 py-4 rounded-xl border border-slate-600 hover:bg-slate-700 transition-colors">
+            <Download size={24} /> Download Source
+          </a>
+        </div>
+        
+        <div className="pt-10 flex flex-col items-center">
+          <a href="https://buymeacoffee.com/bindel" target="_blank" className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-[#FFDD00] text-black font-bold hover:scale-105 transition-transform shadow-lg shadow-yellow-500/20 text-lg">
+            <Coffee size={24} /> Buy Me A Coffee
+          </a>
+          <p className="text-sm text-slate-500 mt-4 max-w-md mx-auto">Support open-source development and get an exclusive Supporter Badge & premium features in the app.</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   // --- States ---
   const [input, setInput] = useState('');
@@ -282,6 +322,7 @@ export default function App() {
   const [apiKey, setApiKey] = useState(process.env.GEMINI_API_KEY || localStorage.getItem('gemini_api_key') || '');
   const [isSupporter, setIsSupporter] = useState(false);
   const [fontSize, setFontSize] = useState('text-base');
+  const [showLanding, setShowLanding] = useState(true);
   const [viewMode, setViewMode] = useState<'view' | 'edit'>('view');
   const [highlights, setHighlights] = useState<{ id: string, text: string }[]>([]);
   const [toasts, setToasts] = useState<{ id: number, message: string, type?: 'success' | 'error' }[]>([]);
@@ -594,6 +635,10 @@ export default function App() {
   // --- Render Helpers ---
   const charCount = input.length;
   const wordCount = output.trim().split(/\s+/).filter(w => w.length > 0).length;
+
+  if (showLanding) {
+    return <LandingPage onLaunch={() => setShowLanding(false)} />;
+  }
 
   return (
     <div className={cn(
