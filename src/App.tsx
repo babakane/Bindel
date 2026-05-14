@@ -32,7 +32,8 @@ import {
   Coffee,
   Info,
   Heart,
-  BookOpen
+  BookOpen,
+  HelpCircle
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -220,6 +221,26 @@ const SettingsModal = ({ isOpen, onClose, apiKey, setApiKey }: any) => {
   );
 };
 
+const HelpModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
+  if (!isOpen) return null;
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[200] bg-editorial-text/60 backdrop-blur-md flex items-center justify-center p-6">
+      <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900 w-full max-w-2xl p-10 border border-editorial-border shadow-2xl overflow-y-auto max-h-[80vh]">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-3xl font-serif">How to use Bindel</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-800 dark:hover:text-white"><X size={24} /></button>
+        </div>
+        <div className="space-y-6 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+          <div className="flex gap-4 items-start"><Globe className="text-brand-primary shrink-0 mt-1" size={20} /> <div><strong>1. Ingest Content:</strong> Click "Ingest" to paste a URL. Bindel automatically extracts the article and converts it to clean Markdown. You can also upload files or paste text.</div></div>
+          <div className="flex gap-4 items-start"><Sparkles className="text-amber-500 shrink-0 mt-1" size={20} /> <div><strong>2. AI Polishing:</strong> Highlight any text to use the floating toolbar for "Polish", "Summarize", or "Explain". Or click "Excellent Writing" to refine the whole document.</div></div>
+          <div className="flex gap-4 items-start"><Zap className="text-blue-500 shrink-0 mt-1" size={20} /> <div><strong>3. API Setup:</strong> For the free online version, open the Menu and click "AI Settings" to securely add your Gemini API key and unlock AI features.</div></div>
+          <div className="flex gap-4 items-start"><Download className="text-emerald-500 shrink-0 mt-1" size={20} /> <div><strong>4. Export:</strong> When finished, click the Export button to download a standard `.md` file for your permanent notes.</div></div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
 const SliceMenu = ({ isOpen, onClose, onClear, onExport, onAbout, onSettings, isSupporter, onSupport }: any) => {
   return (
     <AnimatePresence>
@@ -286,6 +307,16 @@ const LandingPage = ({ onLaunch }: { onLaunch: () => void }) => {
           </div>
         </div>
 
+        <div className="bg-slate-900/50 rounded-2xl p-8 border border-white/5 text-left mb-10">
+          <h3 className="text-2xl font-bold flex items-center gap-2 mb-6 text-white"><HelpCircle size={24} className="text-brand-primary" /> How to use Bindel</h3>
+          <div className="grid sm:grid-cols-2 gap-6 text-slate-400">
+            <div className="flex gap-3"><div className="bg-brand-primary/20 text-brand-primary font-bold w-8 h-8 rounded-full flex items-center justify-center shrink-0">1</div><p><strong>Ingest:</strong> Paste a URL or upload a file. Bindel strips formatting and creates clean Markdown.</p></div>
+            <div className="flex gap-3"><div className="bg-amber-500/20 text-amber-500 font-bold w-8 h-8 rounded-full flex items-center justify-center shrink-0">2</div><p><strong>AI Polish:</strong> Highlight text or click "Excellent Writing" to use Gemini AI for academic editing.</p></div>
+            <div className="flex gap-3"><div className="bg-blue-500/20 text-blue-500 font-bold w-8 h-8 rounded-full flex items-center justify-center shrink-0">3</div><p><strong>Setup:</strong> Go to Menu &gt; AI Settings to add your free Gemini API key if using the web version.</p></div>
+            <div className="flex gap-3"><div className="bg-emerald-500/20 text-emerald-500 font-bold w-8 h-8 rounded-full flex items-center justify-center shrink-0">4</div><p><strong>Export:</strong> Download your polished workspace as a `.md` file for your permanent notes.</p></div>
+          </div>
+        </div>
+
         <div className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-8 border-t border-slate-700/50">
           <button onClick={onLaunch} className="bg-brand-primary hover:bg-blue-700 text-white flex items-center justify-center gap-2 text-lg font-bold py-4 px-8 rounded-xl transition-all shadow-lg hover:-translate-y-1">
             <Globe size={24} /> Use Online Free
@@ -319,6 +350,7 @@ export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [apiKey, setApiKey] = useState(process.env.GEMINI_API_KEY || localStorage.getItem('gemini_api_key') || '');
   const [isSupporter, setIsSupporter] = useState(false);
   const [fontSize, setFontSize] = useState('text-base');
@@ -692,6 +724,7 @@ export default function App() {
           </div>
 
           <div className="flex items-center ml-2 pl-4 border-l border-editorial-border dark:border-slate-800 gap-1.5">
+            <HeaderButton icon={<HelpCircle size={16} />} onClick={() => setIsHelpOpen(true)} tooltip="How to Use" />
             <HeaderButton icon={<Type size={16} />} onClick={toggleFontSize} tooltip="Text Size" />
             <HeaderButton icon={isDark ? <Sun size={16} /> : <Moon size={16} />} onClick={toggleTheme} tooltip="Toggle Theme" />
             <HeaderButton icon={<Trash2 size={16} />} onClick={clearContent} tooltip="Clear Canvas" />
@@ -889,6 +922,7 @@ export default function App() {
         />
         <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
         <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} apiKey={apiKey} setApiKey={setApiKey} />
+        <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
       </AnimatePresence>
     </div>
   );
