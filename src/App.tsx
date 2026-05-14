@@ -30,7 +30,8 @@ import {
   Menu,
   Coffee,
   Info,
-  Heart
+  Heart,
+  BookOpen
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -125,6 +126,8 @@ const FloatingToolbar = ({ position, selection, onAction }: { position: { x: num
     <ToolbarBtn icon={<Copy size={14} />} onClick={() => onAction('copy')} />
     <ToolbarBtn icon={<Zap size={14} className="text-brand-primary" />} onClick={() => onAction('highlight')} />
     <ToolbarBtn icon={<Sparkles size={14} className="text-amber-400" />} onClick={() => onAction('polish')} label="Polish" />
+    <ToolbarBtn icon={<MessageSquare size={14} className="text-blue-400" />} onClick={() => onAction('summarize')} label="Summarize" />
+    <ToolbarBtn icon={<BookOpen size={14} className="text-green-400" />} onClick={() => onAction('explain')} label="Explain" />
     <ToolbarBtn icon={<Download size={14} />} onClick={() => onAction('export')} />
   </motion.div>
 );
@@ -256,6 +259,7 @@ export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isSupporter, setIsSupporter] = useState(false);
+  const [fontSize, setFontSize] = useState('text-base');
   const [viewMode, setViewMode] = useState<'view' | 'edit'>('view');
   const [highlights, setHighlights] = useState<{ id: string, text: string }[]>([]);
   const [toasts, setToasts] = useState<{ id: number, message: string, type?: 'success' | 'error' }[]>([]);
@@ -304,7 +308,11 @@ export default function App() {
       setOutput(prev => prev.replace(selection, highlightedText));
       showToast('Text highlighted');
     } else if (action === 'polish') {
-      aiPolish(selection, true);
+      aiPolish(selection, true, "Improve the following text to be more academic, professional, and clear. Maintain all factual information and core meaning. Output ONLY the improved text.");
+    } else if (action === 'summarize') {
+      aiPolish(selection, true, "Provide a concise summary of the following text. Output ONLY the summary.");
+    } else if (action === 'explain') {
+      aiPolish(selection, true, "Explain the following text simply and clearly, as if to a beginner. Output ONLY the explanation.");
     } else if (action === 'export') {
       const blob = new Blob([selection], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
@@ -332,6 +340,13 @@ export default function App() {
     setIsDark(newTheme);
     localStorage.setItem('theme', newTheme ? 'dark' : 'light');
     document.documentElement.classList.toggle('dark', newTheme);
+  };
+
+  const toggleFontSize = () => {
+    const sizes = ['text-sm', 'text-base', 'text-lg', 'text-xl'];
+    const nextIndex = (sizes.indexOf(fontSize) + 1) % sizes.length;
+    setFontSize(sizes[nextIndex]);
+    showToast(`Font size: ${sizes[nextIndex].replace('text-', '')}`);
   };
 
   const cleanPlainText = (text: string) => {
@@ -463,18 +478,20 @@ export default function App() {
     }
   };
 
-  const aiPolish = async (targetText?: string, isSnippet = false) => {
+  const aiPolish = async (targetText?: string, isSnippet = false, customPrompt?: string) => {
     const textToPolish = targetText || input;
     if (!textToPolish.trim()) return;
 
     setIsPolishing(true);
-    showToast('AI is polishing writing...');
+    showToast(isSnippet ? 'AI is processing snippet...' : 'AI is polishing writing...');
 
     try {
       const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+      const prompt = customPrompt || "You are an expert research editor. Improve the following text to be more academic, professional, and clear. Maintain all factual information and core meaning. Use high-modern academic structure. If it's HTML, return proper Markdown. Output ONLY the improved text.";
+      
       const response = await genAI.models.generateContent({
         model: "gemini-3-flash-preview",
-        contents: `You are an expert research editor. Improve the following text to be more academic, professional, and clear. Maintain all factual information and core meaning. Use high-modern academic structure. If it's HTML, return proper Markdown. Output ONLY the improved text.\n\nText:\n${textToPolish}`,
+        contents: `${prompt}\n\nText:\n${textToPolish}`,
       });
 
       const polished = response.text;
@@ -597,6 +614,7 @@ export default function App() {
           </div>
 
           <div className="flex items-center ml-2 pl-4 border-l border-editorial-border dark:border-slate-800 gap-1.5">
+            <HeaderButton icon={<Type size={16} />} onClick={toggleFontSize} tooltip="Text Size" />
             <HeaderButton icon={isDark ? <Sun size={16} /> : <Moon size={16} />} onClick={toggleTheme} tooltip="Toggle Theme" />
             <HeaderButton icon={<Trash2 size={16} />} onClick={clearContent} tooltip="Clear Canvas" />
             <HeaderButton icon={<Download size={16} />} onClick={downloadMarkdown} disabled={!output} tooltip="Export .md" />
@@ -641,7 +659,7 @@ export default function App() {
           <div className="max-w-[1000px] mx-auto min-h-full">
             {output ? (
               viewMode === 'view' ? (
-                <div ref={outputRef} className="markdown-body relative group animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div ref={outputRef} className={cn("markdown-body relative group animate-in fade-in slide-in-from-bottom-4 duration-700", fontSize)}>
                    <ReactMarkdown 
                       remarkPlugins={[remarkGfm]}
                       rehypePlugins={[rehypeRaw]}
@@ -685,7 +703,7 @@ export default function App() {
                   ref={editAreaRef}
                   value={output}
                   onChange={(e) => setOutput(e.target.value)}
-                  className="w-full h-[80vh] resize-none bg-transparent outline-none font-mono text-sm leading-relaxed border-l border-editorial-border pl-8"
+                  className={cn("w-full h-[80vh] resize-none bg-transparent outline-none font-mono leading-relaxed border-l border-editorial-border pl-8", fontSize)}
                 />
               )
             ) : (
@@ -722,6 +740,22 @@ export default function App() {
                 <div className="mt-8 flex items-center gap-2 text-slate-300">
                    <HeaderButton icon={<Clipboard size={14} />} onClick={() => {}} label="Auto-detect Active" className="border-none bg-transparent h-auto opacity-50 cursor-default" />
                 </div>
+                <label className="mt-6 flex items-center gap-2 cursor-pointer text-brand-primary border border-brand-primary/30 px-6 py-3 rounded-lg hover:bg-brand-primary/10 transition-colors font-bold uppercase tracking-wider text-[11px]">
+                  <UploadCloud size={16} /> Upload Document (.txt, .md, .html)
+                  <input type="file" accept=".txt,.md,.html" className="hidden" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (event) => {
+                        const text = event.target?.result as string;
+                        setInput(text);
+                        convertContent(text);
+                        showToast(`Imported: ${file.name}`);
+                      };
+                      reader.readAsText(file);
+                    }
+                  }} />
+                </label>
               </div>
             )}
           </div>
