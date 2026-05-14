@@ -3,6 +3,7 @@ import TurndownService from 'turndown';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import { Readability } from '@mozilla/readability';
 import { GoogleGenAI } from '@google/genai';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -201,7 +202,25 @@ const AboutModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void 
   );
 };
 
-const SliceMenu = ({ isOpen, onClose, onClear, onExport, onAbout, isSupporter, onSupport }: any) => {
+const SettingsModal = ({ isOpen, onClose, apiKey, setApiKey }: any) => {
+  if (!isOpen) return null;
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[200] bg-editorial-text/40 backdrop-blur-sm flex items-center justify-center p-6">
+      <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900 w-full max-w-md p-8 border border-editorial-border shadow-2xl">
+        <div className="mb-6">
+          <h2 className="text-2xl font-serif">API Configuration</h2>
+          <p className="text-xs text-slate-500 mt-2">Enter your Google Gemini API key to unlock AI features locally.</p>
+        </div>
+        <input type="password" placeholder="AIzaSy..." value={apiKey} onChange={(e) => setApiKey(e.target.value)} className="w-full h-12 px-4 border border-editorial-border bg-editorial-bg dark:bg-slate-950 outline-none focus:border-brand-primary transition-colors text-sm mb-6" />
+        <div className="flex justify-end gap-3">
+          <HeaderButton primary label="Save Settings" onClick={onClose} />
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+const SliceMenu = ({ isOpen, onClose, onClear, onExport, onAbout, onSettings, isSupporter, onSupport }: any) => {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -219,6 +238,7 @@ const SliceMenu = ({ isOpen, onClose, onClear, onExport, onAbout, isSupporter, o
               
               <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-8 mb-4">Application</div>
               <MenuButton icon={<Info size={16} />} label="About Bindel" onClick={onAbout} />
+              <MenuButton icon={<Zap size={16} />} label="AI Settings" onClick={onSettings} />
             </div>
             <div className="p-6 border-t border-editorial-border bg-editorial-bg dark:bg-slate-900/50">
               {isSupporter ? (
@@ -258,6 +278,8 @@ export default function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [apiKey, setApiKey] = useState(process.env.GEMINI_API_KEY || localStorage.getItem('gemini_api_key') || '');
   const [isSupporter, setIsSupporter] = useState(false);
   const [fontSize, setFontSize] = useState('text-base');
   const [viewMode, setViewMode] = useState<'view' | 'edit'>('view');
@@ -457,16 +479,17 @@ export default function App() {
     setIsExtracting(true);
     showToast('Ingesting content...');
     try {
-      const response = await fetch('/api/extract', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url })
-      });
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
+      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+      const response = await fetch(proxyUrl);
+      const htmlText = await response.text();
+      
+      const doc = new DOMParser().parseFromString(htmlText, 'text/html');
+      const reader = new Readability(doc);
+      const article = reader.parse();
+      
+      if (!article) throw new Error("Failed to extract article content");
 
-      // We combine title and content
-      const compositeContent = `<h1>${data.title}</h1>\n\n${data.content}`;
+      const compositeContent = `<h1>${article.title}</h1>\n\n${article.content}`;
       setInput(compositeContent);
       setIsModalOpen(false);
       convertContent(compositeContent);
@@ -479,6 +502,12 @@ export default function App() {
   };
 
   const aiPolish = async (targetText?: string, isSnippet = false, customPrompt?: string) => {
+    if (!apiKey) {
+      setIsSettingsOpen(true);
+      showToast('Please provide your Gemini API key first', 'error');
+      return;
+    }
+
     const textToPolish = targetText || input;
     if (!textToPolish.trim()) return;
 
@@ -486,7 +515,7 @@ export default function App() {
     showToast(isSnippet ? 'AI is processing snippet...' : 'AI is polishing writing...');
 
     try {
-      const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+      const genAI = new GoogleGenAI({ apiKey });
       const prompt = customPrompt || "You are an expert research editor. Improve the following text to be more academic, professional, and clear. Maintain all factual information and core meaning. Use high-modern academic structure. If it's HTML, return proper Markdown. Output ONLY the improved text.";
       
       const response = await genAI.models.generateContent({
@@ -530,6 +559,10 @@ export default function App() {
     localStorage.setItem('research_output', output);
     localStorage.setItem('research_input', input);
   }, [output, input]);
+
+  useEffect(() => {
+    if (apiKey) localStorage.setItem('gemini_api_key', apiKey);
+  }, [apiKey]);
 
   // --- Drop Zone Logic ---
   const onDragOver = (e: React.DragEvent) => {
@@ -805,10 +838,12 @@ export default function App() {
           onClear={clearContent} 
           onExport={downloadMarkdown} 
           onAbout={() => { setIsMenuOpen(false); setIsAboutOpen(true); }}
+          onSettings={() => { setIsMenuOpen(false); setIsSettingsOpen(true); }}
           isSupporter={isSupporter}
           onSupport={() => { window.open('https://buymeacoffee.com/bindel', '_blank'); setIsSupporter(true); showToast('Thanks for supporting!'); }}
         />
         <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
+        <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} apiKey={apiKey} setApiKey={setApiKey} />
       </AnimatePresence>
     </div>
   );
