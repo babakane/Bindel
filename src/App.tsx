@@ -26,7 +26,11 @@ import {
   Maximize2,
   Table as TableIcon,
   X,
-  Globe
+  Globe,
+  Menu,
+  Coffee,
+  Info,
+  Heart
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -176,6 +180,69 @@ const IngestModal = ({ isOpen, onClose, onIngest, isLoading }: { isOpen: boolean
   );
 };
 
+const AboutModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
+  if (!isOpen) return null;
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[200] bg-editorial-text/60 backdrop-blur-md flex items-center justify-center p-6">
+      <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} className="bg-white dark:bg-slate-900 w-full max-w-2xl p-10 border border-editorial-border shadow-2xl overflow-y-auto max-h-[80vh]">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-3xl font-serif">Why Bindel?</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-800 dark:hover:text-white"><X size={24} /></button>
+        </div>
+        <div className="space-y-6 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+          <p><strong>The Goal:</strong> Bindel was built to bridge the gap between raw, messy web scraping and clean, high-academic writing. Traditional note-taking apps require too much formatting and manual intervention. Bindel automates the ingestion pipeline.</p>
+          <p><strong>Why It's Different:</strong> Bindel acts as a smart canvas. It strips away distractions, automatically generates footnotes from injected URLs, and seamlessly integrates with Google Gemini to refine your prose into "excellent writing" with a single click. It's a reading and writing mode that actually respects your focus.</p>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+const SliceMenu = ({ isOpen, onClose, onClear, onExport, onAbout, isSupporter, onSupport }: any) => {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 z-[150] bg-black/20 backdrop-blur-sm" />
+          <motion.div initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} transition={{ type: 'spring', bounce: 0, duration: 0.4 }} className="fixed left-0 top-0 bottom-0 w-80 bg-white dark:bg-slate-950 border-r border-editorial-border z-[160] flex flex-col shadow-2xl">
+            <div className="p-8 border-b border-editorial-border flex justify-between items-center">
+              <h2 className="text-xl font-serif">Menu Slice</h2>
+              <button onClick={onClose} className="hover:text-brand-primary transition-colors"><X size={20} /></button>
+            </div>
+            <div className="flex-1 p-6 space-y-2 overflow-y-auto">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4">File Operations</div>
+              <MenuButton icon={<Download size={16} />} label="Export Markdown" onClick={onExport} />
+              <MenuButton icon={<Trash2 size={16} />} label="Clear Canvas" onClick={onClear} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30" />
+              
+              <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-8 mb-4">Application</div>
+              <MenuButton icon={<Info size={16} />} label="About Bindel" onClick={onAbout} />
+            </div>
+            <div className="p-6 border-t border-editorial-border bg-editorial-bg dark:bg-slate-900/50">
+              {isSupporter ? (
+                <div className="flex items-center gap-3 text-brand-primary p-3 bg-brand-primary/10 border border-brand-primary/20 rounded-lg">
+                  <Heart size={20} className="fill-brand-primary" />
+                  <span className="text-xs font-bold uppercase tracking-wider">Premium Supporter</span>
+                </div>
+              ) : (
+                <button onClick={onSupport} className="w-full flex items-center justify-center gap-2 p-3 bg-[#FFDD00] text-black font-bold hover:scale-[1.02] transition-transform rounded-lg shadow-lg">
+                  <Coffee size={18} /> Buy me a Coffee
+                </button>
+              )}
+              <p className="text-[10px] text-slate-500 mt-3 text-center leading-relaxed">Support the project and unlock unlimited AI polishes & priority processing.</p>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
+const MenuButton = ({ icon, label, onClick, className }: any) => (
+  <button onClick={onClick} className={cn("w-full flex items-center gap-3 p-3 text-sm font-medium hover:bg-editorial-bg dark:hover:bg-slate-900 transition-colors rounded-md text-left", className)}>
+    {icon} {label}
+  </button>
+);
+
 export default function App() {
   // --- States ---
   const [input, setInput] = useState('');
@@ -186,6 +253,9 @@ export default function App() {
   const [isPolishing, setIsPolishing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [isSupporter, setIsSupporter] = useState(false);
   const [viewMode, setViewMode] = useState<'view' | 'edit'>('view');
   const [highlights, setHighlights] = useState<{ id: string, text: string }[]>([]);
   const [toasts, setToasts] = useState<{ id: number, message: string, type?: 'success' | 'error' }[]>([]);
@@ -482,9 +552,14 @@ export default function App() {
     )}>
       {/* Header */}
       <header className="h-[100px] col-span-full px-6 md:px-20 flex items-center justify-between border-b border-editorial-border bg-white/80 dark:bg-slate-950/80 backdrop-blur-md z-20 shrink-0">
-        <div className="flex flex-col">
-          <h1 className="text-2xl md:text-3xl tracking-tighter uppercase font-serif">Research Reader</h1>
-          <div className="text-[9px] uppercase tracking-[4px] opacity-50 mt-1">Unified Smart Canvas</div>
+        <div className="flex items-center gap-6">
+          <button onClick={() => setIsMenuOpen(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-500 hover:text-brand-primary">
+            <Menu size={24} />
+          </button>
+          <div className="flex flex-col">
+            <h1 className="text-2xl md:text-3xl tracking-tighter uppercase font-serif">Bindel</h1>
+            <div className="text-[9px] uppercase tracking-[4px] opacity-50 mt-1">Unified Smart Canvas</div>
+          </div>
         </div>
 
         <div className="flex items-center gap-4">
@@ -563,7 +638,7 @@ export default function App() {
         </AnimatePresence>
 
         <div className="h-full overflow-y-auto px-6 py-12 md:py-20 scroll-smooth">
-          <div className="max-w-[800px] mx-auto min-h-full">
+          <div className="max-w-[1000px] mx-auto min-h-full">
             {output ? (
               viewMode === 'view' ? (
                 <div ref={outputRef} className="markdown-body relative group animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -690,6 +765,16 @@ export default function App() {
           onIngest={ingestFromUrl} 
           isLoading={isExtracting} 
         />
+        <SliceMenu 
+          isOpen={isMenuOpen} 
+          onClose={() => setIsMenuOpen(false)} 
+          onClear={clearContent} 
+          onExport={downloadMarkdown} 
+          onAbout={() => { setIsMenuOpen(false); setIsAboutOpen(true); }}
+          isSupporter={isSupporter}
+          onSupport={() => { window.open('https://buymeacoffee.com/bindel', '_blank'); setIsSupporter(true); showToast('Thanks for supporting!'); }}
+        />
+        <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
       </AnimatePresence>
     </div>
   );
