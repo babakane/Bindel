@@ -33,7 +33,9 @@ import {
   Info,
   Heart,
   BookOpen,
-  HelpCircle
+  HelpCircle,
+  Layout,
+  List
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -287,6 +289,37 @@ const MenuButton = ({ icon, label, onClick, className }: any) => (
   </button>
 );
 
+const StructureDropdown = ({ onSelect, disabled }: any) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="relative">
+      <HeaderButton 
+        icon={<Layout size={16} className="text-emerald-500" />} 
+        onClick={() => setIsOpen(!isOpen)} 
+        disabled={disabled}
+        label="Structure Fit"
+      />
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+            <motion.div 
+              initial={{ opacity: 0, y: 5 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              exit={{ opacity: 0, y: 5 }}
+              className="absolute top-full mt-2 left-0 md:right-0 md:left-auto bg-white dark:bg-slate-900 border border-editorial-border shadow-xl rounded-lg overflow-hidden z-50 w-56"
+            >
+              <button onClick={() => { onSelect('article'); setIsOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm flex items-center gap-3"><FileText size={16}/> Article Mode</button>
+              <button onClick={() => { onSelect('topic'); setIsOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm flex items-center gap-3 border-t border-editorial-border"><List size={16}/> Topic Outline</button>
+              <button onClick={() => { onSelect('book'); setIsOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm flex items-center gap-3 border-t border-editorial-border"><BookOpen size={16}/> Book Chapter</button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 const LandingPage = ({ onLaunch }: { onLaunch: () => void }) => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-slate-100 font-sans">
@@ -428,6 +461,18 @@ export default function App() {
 
   const removeToast = (id: number) => {
     setToasts(prev => prev.filter(t => t.id !== id));
+  };
+
+  const handleStructureFit = (mode: string) => {
+    let prompt = "";
+    if (mode === 'article') {
+      prompt = "Rewrite the following text into a highly engaging, modern blog article similar to a Medium post. Use compelling headings, engaging hooks, and readable paragraphs. Output ONLY the markdown text.";
+    } else if (mode === 'topic') {
+      prompt = "Extract and structure the following text into a comprehensive, well-organized topic outline with bullet points, sub-bullets, and clear hierarchical headers. Output ONLY the markdown text.";
+    } else if (mode === 'book') {
+      prompt = "Rewrite the following text as a formal chapter of a non-fiction book. Use an authoritative, narrative tone, clear section breaks, and deep contextual elaboration. Output ONLY the markdown text.";
+    }
+    aiPolish(undefined, false, prompt);
   };
 
   const toggleTheme = () => {
@@ -706,12 +751,12 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2">
+            <StructureDropdown onSelect={handleStructureFit} disabled={isPolishing || !input} />
              <HeaderButton 
               icon={isPolishing ? <div className="animate-spin rounded-full h-3 w-3 border-2 border-amber-400 border-t-transparent" /> : <Sparkles size={16} className="text-amber-500" />} 
               onClick={() => aiPolish()} 
               disabled={isPolishing || !input}
               label="Excellent Writing"
-              className="px-6"
             />
             <HeaderButton 
               active 
