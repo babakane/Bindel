@@ -1,0 +1,107 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-editorial-bg: #fdfdfd;
+  --color-editorial-text: #1a1a1a;
+  --color-editorial-pane: #f8f8f8;
+  --color-editorial-border: #eeeeee;
+  --color-brand-primary: #8b5cf6;
+  --color-brand-hover: #7c3aed;
+}
+
+@layer base {
+  body {
+    @apply font-sans antialiased text-editorial-text bg-editorial-bg transition-colors duration-300;
+  }
+}
+
+.markdown-body {
+  @apply prose prose-neutral max-w-none dark:prose-invert;
+}
+
+.markdown-body sup {
+  @apply text-[10px] font-bold text-brand-primary ml-0.5 hover:underline cursor-pointer no-underline;
+}
+
+.highlight-yellow {
+  @apply bg-amber-200/60 dark:bg-amber-500/30 px-1 py-0.5 rounded-sm transition-all;
+}
+
+.markdown-body h1 {
+  @apply font-serif text-5xl font-bold tracking-tight mb-12 mt-0;
+}
+
+.markdown-body h2 {
+  @apply font-serif text-3xl font-bold tracking-tight mt-16 mb-6 pb-2 border-b border-editorial-border dark:border-slate-800;
+}
+
+.markdown-body h3 {
+  @apply font-serif text-xl font-bold tracking-tight mt-10 mb-4;
+}
+
+.markdown-body p {
+  @apply text-lg leading-relaxed text-editorial-text/80 dark:text-slate-300 mb-8;
+}
+
+.markdown-body blockquote {
+  @apply border-l-4 border-brand-primary italic bg-editorial-pane dark:bg-slate-900/50 p-8 rounded-r-sm my-12;
+}
+
+.markdown-body code {
+  @apply bg-editorial-pane dark:bg-slate-900 px-1.5 py-0.5 rounded text-[0.9em] font-mono text-brand-primary;
+}
+
+.markdown-body pre {
+  @apply bg-editorial-text dark:bg-slate-950 p-6 rounded-none my-10 border border-white/5;
+}
+
+.markdown-body table {
+  @apply border-collapse w-full my-12 text-sm;
+}
+
+.markdown-body th {
+  @apply bg-editorial-pane dark:bg-slate-900/50 p-4 font-bold border border-editorial-border dark:border-slate-800 text-left;
+}
+
+.markdown-body td {
+  @apply p-4 border border-editorial-border dark:border-slate-800;
+}
+
+.footnotes-section {
+  @apply mt-20 pt-10 border-t border-editorial-border dark:border-slate-800;
+}
+
+.footnotes-section summary {
+  @apply mb-4 hover:opacity-80 transition-opacity;
+}
+
+.footnotes-section ol {
+  @apply text-xs text-slate-500;
+}
+
+.footnotes-section li {
+  @apply mb-2;
+}
+
+.footnotes-section a {
+  @apply text-brand-primary ml-1 no-underline hover:underline;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  @apply w-1.5 h-1.5;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 dark:bg-slate-800 rounded-full hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors;
+}
