@@ -1,0 +1,95 @@
+Bindel Refactoring & Monetization Implementation Plan
+Bindel is currently a monolithic single-file React 19 application. To scale, improve maintainability, and introduce premium supporter monetization features, we are refactoring it into a highly modular, professional architecture.
+
+🏗️ Target Architecture
+We will split src/App.tsx into the following modular structure:
+
+src/
+├── App.tsx                    # Lightweight orchestrator
+├── main.tsx                   # App mounting point
+├── index.css                  # Tailwind CSS import & base styles
+├── components/
+│   ├── ErrorBoundary.tsx      # Robust error capture component
+│   ├── layout/
+│   │   ├── Header.tsx         # Responsive header
+│   │   ├── Footer.tsx         # App footer status bar
+│   │   └── Sidebar.tsx        # SlideMenu (renamed to Sidebar)
+│   ├── modals/
+│   │   ├── IngestModal.tsx    # Fetch URL modal
+│   │   ├── AboutModal.tsx     # Information modal
+│   │   ├── SettingsModal.tsx  # API key config modal
+│   │   ├── HelpModal.tsx      # How-to modal
+│   │   └── SupportModal.tsx   # Buy Me a Coffee widget & benefits
+│   ├── editor/
+│   │   ├── MarkdownEditor.tsx # Textarea editor for manual tweaks
+│   │   ├── MarkdownPreview.tsx# ReactMarkdown renderer with GFM
+│   │   ├── FloatingToolbar.tsx# Text selection popup action bar
+│   │   └── Lightbox.tsx       # Fullscreen image viewer
+│   └── ui/
+│       ├── Toast.tsx          # Micro-toast notifications
+│       ├── MenuButton.tsx     # Sidebar button component
+│       ├── HeaderButton.tsx   # Header action button component
+│       ├── ToolbarBtn.tsx     # Floating toolbar button component
+│       └── StructureDropdown.tsx # Dropdown for Article/Topic/Book mode
+├── hooks/
+│   ├── useLocalStorage.ts     # Save & load values from localStorage
+│   ├── useTheme.ts            # Light/Dark mode state & system theme Sync
+│   ├── useToast.ts            # Manage notifications queue
+│   ├── useSelection.ts        # Track client selection positions
+│   ├── useGeminiAI.ts         # Encapsulate full & partial polishing requests
+│   └── useSupporter.ts        # Manage supporter status logic (Buy Me a Coffee)
+├── services/
+│   ├── extractor.ts           # Readability fetching via local API / CORS proxy
+│   ├── turndown.ts            # HTML to Markdown Turndown compiler configuration
+│   ├── gemini.ts              # Gemini API client instantiation
+│   └── export.ts              # File download & clipboard helper functions
+├── utils/
+│   ├── cn.ts                  # Tailwind Merge & Clsx class combiner
+│   ├── markdown.ts            # Footnote generation & CSV table parsing
+│   └── urls.ts                # URL patterns and content detectors
+├── types/
+│   └── index.ts               # Shared interfaces (Highlights, Toasts, etc.)
+└── constants/
+    └── index.ts               # Hardcoded prompts, magic strings, and configuration
+🛠️ Step-by-Step Execution Plan
+1. Infrastructure & Config Updates
+tsconfig.json: Add strict compiler options to enforce strict types:
+json
+"strict": true,
+"noUncheckedIndexedAccess": true,
+"noImplicitReturns": true,
+"forceConsistentCasingInFileNames": true
+.env.example: Add configuration variables for Gemini API and Buy Me a Coffee.
+bash
+GEMINI_API_KEY=your_gemini_api_key_here
+BUYMEACOFFEE_USERNAME=your_username
+BUYMEACOFFEE_WIDGET_ID=optional
+2. Core Utilities & Types
+Create src/types/index.ts to hold core structures (ToastMessage, Highlight, ViewMode, FontSize, etc.).
+Create src/utils/cn.ts to export standard class list merges.
+Create src/utils/urls.ts with smart content type detection (html, markdown, url-list, plain) and URL extractors.
+Create src/utils/markdown.ts containing the footnote injection and CSV table conversions.
+3. Services
+Create src/services/turndown.ts for consistent HTML -> Markdown parsing.
+Create src/services/gemini.ts for GoogleGenAI SDK wrapper.
+Create src/services/export.ts for local exports & copies.
+Create src/services/extractor.ts to support fetching URLs using both local server-side parsing (/api/extract) and backup remote CORS proxy methods (corsproxy.io).
+4. Hooks
+useLocalStorage: State wrapper for persistence.
+useTheme: Handles system themes, custom preferences, and updates documentElement.
+useToast: Queue manager for notifications.
+useSelection: Handles text range selectors and anchor nodes inside the editor canvas.
+useGeminiAI: Dispatches model completions using structured templates.
+useSupporter: Manages Buy Me a Coffee credentials, unlock statuses, and saves preference states.
+5. UI & Layout Components
+Split up smaller UI wrappers: Toast, HeaderButton, MenuButton, ToolbarBtn, and StructureDropdown.
+Rebuild modulatory components:
+ErrorBoundary: Catch render crashes.
+Modals: IngestModal, AboutModal, SettingsModal, HelpModal, and SupportModal (highly styling-focused, interactive supporter checkout mockup).
+Editor elements: MarkdownEditor, MarkdownPreview, FloatingToolbar, and Lightbox.
+Layout: Header, Footer, Sidebar (Sidebar matches old SlideMenu with active animations).
+LandingPage: Modularized welcome layout.
+6. Integration & Validation
+Update App.tsx to act as the central manager, hooking all systems together.
+Test compilation using npm run lint and run a local dev server with npm run dev.
+Use the browser subagent to visually verify that all buttons, modals, AI integrations, and structural modifications function correctly.
